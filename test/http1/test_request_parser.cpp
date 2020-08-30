@@ -10,7 +10,7 @@ void test_request_parser() {
         const std::string_view input =
             "GET /index.html HTTP/1.1\r\n"
             "Host: example.com\r\n"
-            "Accept:*/*\r\n"
+            "Accept:*/* \r\n"
             "\r\n";
 
         const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input);

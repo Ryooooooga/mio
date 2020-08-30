@@ -2,6 +2,7 @@
 #define INCLUDE_mio_http_server_hpp
 
 #include <cstdint>
+#include <functional>
 
 namespace mio {
     class http_server {
@@ -9,7 +10,7 @@ namespace mio {
         http_server() = default;
         ~http_server() noexcept = default;
 
-        void listen(std::uint16_t port);
+        void listen(std::uint16_t port, std::function<void()> callback);
 
     private:
         // Uncopyable and unmovable

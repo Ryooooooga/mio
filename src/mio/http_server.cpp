@@ -14,7 +14,7 @@ namespace mio {
         constexpr std::size_t max_header_size = 4096;
         constexpr std::size_t max_header_lines = 100;
 
-        void on_client_accepted(int client_socket) noexcept {
+        void on_client_accepted(int client_socket, std::function<void()> callback) noexcept {
             try {
                 char buffer[max_header_size];
                 http1::header headers[max_header_lines];
@@ -44,6 +44,8 @@ namespace mio {
                             throw std::runtime_error{"invalid request"};
                     }
 
+                    callback();
+
                     ::send(client_socket, "OK\r\n", 2, 0);
                     break;
                 } while (true);
@@ -55,7 +57,7 @@ namespace mio {
         }
     } // namespace
 
-    void http_server::listen(std::uint16_t port) {
+    void http_server::listen(std::uint16_t port, std::function<void()> callback) {
         const auto socket = ::socket(AF_INET, SOCK_STREAM, 0);
         if (socket < 0) {
             throw std::system_error{errno, std::generic_category()};
@@ -86,7 +88,7 @@ namespace mio {
                     throw std::system_error{errno, std::generic_category()};
                 }
 
-                std::thread{on_client_accepted, client_socket}
+                std::thread{on_client_accepted, client_socket, callback}
                     .detach();
             }
         } catch (...) {

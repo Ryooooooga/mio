@@ -22,15 +22,15 @@ namespace mio {
         http_request& operator=(const http_request&) = delete;
         http_request& operator=(http_request&&) = default;
 
-        [[nodiscard]] std::string_view method() const noexcept {
+        [[nodiscard]] const std::string& method() const noexcept {
             return method_;
         }
 
-        [[nodiscard]] std::string_view request_uri() const noexcept {
+        [[nodiscard]] const std::string& request_uri() const noexcept {
             return request_uri_;
         }
 
-        [[nodiscard]] std::string_view http_version() const noexcept {
+        [[nodiscard]] const std::string& http_version() const noexcept {
             return http_version_;
         }
 

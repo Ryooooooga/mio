@@ -39,7 +39,7 @@ namespace mio {
             return headers_;
         }
 
-        [[nodiscard]] std::string_view content() const noexcept {
+        [[nodiscard]] const std::string& content() const noexcept {
             return content_;
         }
 

@@ -4,6 +4,7 @@ add_library(mio STATIC
     sockets/socket.cpp
     http_headers.cpp
     http_server.cpp
+    router.cpp
 )
 
 target_include_directories(mio

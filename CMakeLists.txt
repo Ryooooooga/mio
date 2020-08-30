@@ -16,6 +16,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 project(mio VERSION 0.1.0 LANGUAGES CXX)
 
+find_package(Threads REQUIRED)
+
 enable_testing()
 add_subdirectory(src)
+add_subdirectory(examples)
 add_subdirectory(test)

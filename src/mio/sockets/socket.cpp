@@ -22,7 +22,7 @@ namespace mio::sockets {
         : fd_(std::exchange(socket.fd_, -1)) {
     }
 
-    socket::~socket() {
+    socket::~socket() noexcept {
         if (fd_ >= 0) {
             ::close(fd_);
         }

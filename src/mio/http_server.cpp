@@ -14,7 +14,16 @@ namespace mio {
         constexpr std::size_t max_header_size = 4096;
         constexpr std::size_t max_header_lines = 100;
 
-        void on_client_accepted(int client_socket, std::function<void()> callback) noexcept {
+        http_request construct_request(const http1::request& from) {
+            http_headers headers{};
+            for (const auto& header : from.headers) {
+                headers.append(header.key, header.value);
+            }
+
+            return http_request{from.method, from.request_uri, from.http_version, std::move(headers)};
+        }
+
+        void on_client_accepted(int client_socket, std::function<void(const http_request& req)> callback) noexcept {
             try {
                 char buffer[max_header_size];
                 http1::header headers[max_header_lines];
@@ -29,8 +38,8 @@ namespace mio {
 
                     header_len += size_read;
 
-                    http1::request req{};
-                    const auto parse_result = http1::parse_request(req, headers, std::string_view{buffer, header_len});
+                    http1::request parsed_req{};
+                    const auto parse_result = http1::parse_request(parsed_req, headers, std::string_view{buffer, header_len});
                     switch (parse_result) {
                         case http1::parse_result::done:
                             break;
@@ -44,7 +53,8 @@ namespace mio {
                             throw std::runtime_error{"invalid request"};
                     }
 
-                    callback();
+                    const auto req = construct_request(parsed_req);
+                    callback(req);
 
                     ::send(client_socket, "OK\r\n", 2, 0);
                     break;
@@ -57,7 +67,7 @@ namespace mio {
         }
     } // namespace
 
-    void http_server::listen(std::uint16_t port, std::function<void()> callback) {
+    void http_server::listen(std::uint16_t port, std::function<void(const http_request& req)> callback) {
         const auto socket = ::socket(AF_INET, SOCK_STREAM, 0);
         if (socket < 0) {
             throw std::system_error{errno, std::generic_category()};

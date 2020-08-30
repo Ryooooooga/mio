@@ -45,7 +45,7 @@ namespace mio {
         void on_client_accepted(sockets::socket client_socket, std::function<http_response(const http_request& req)> callback) noexcept {
             char buffer[max_header_size];
             http1::header headers[max_header_lines];
-            http_response res{400};
+            http_response res{500};
 
             try {
                 std::size_t header_size = 0;
@@ -69,11 +69,11 @@ namespace mio {
                 res = callback(req);
             } catch (...) {
                 res = http_response{
-                    400,
+                    500,
                     http_headers{
                         {"Content-Type", "text/html; charset=utf8"},
                     },
-                    "<html><body>400 Internal Server Error</body></html>",
+                    "<html><body>500 Internal Server Error</body></html>",
                 };
             }
 

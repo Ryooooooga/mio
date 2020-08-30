@@ -1,5 +1,7 @@
-void test_request_parser();
+void test_request();
+void test_response();
 
 int main() {
-    test_request_parser();
+    test_request();
+    test_response();
 }

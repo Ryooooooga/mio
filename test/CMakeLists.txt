@@ -1,6 +1,7 @@
 add_executable(test_mio
     test.cpp
-    http1/test_request_parser.cpp
+    http1/test_request.cpp
+    http1/test_response.cpp
 )
 
 target_link_libraries(test_mio

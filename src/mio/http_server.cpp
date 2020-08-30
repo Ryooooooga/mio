@@ -1,5 +1,7 @@
 #include "mio/http_server.hpp"
 
+#include <iostream>
+#include <sstream>
 #include <system_error>
 #include <thread>
 
@@ -7,7 +9,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "mio/http1/request_parser.hpp"
+#include "mio/http1/request.hpp"
+#include "mio/http1/response.hpp"
 
 namespace mio {
     namespace {
@@ -23,23 +26,44 @@ namespace mio {
             return http_request{from.method, from.request_uri, from.http_version, std::move(headers)};
         }
 
-        void on_client_accepted(int client_socket, std::function<void(const http_request& req)> callback) noexcept {
-            try {
-                char buffer[max_header_size];
-                http1::header headers[max_header_lines];
+        http1::response construct_http1_response(const http_response& from, std::span<http1::header> buffer) {
+            http1::response res{};
+            res.http_version = "HTTP/1.1";
+            res.status_code = from.status_code();
 
+            size_t n = 0;
+            for (const auto& header_entries = from.headers().entries(); n < header_entries.size() && n < buffer.size(); n++) {
+                buffer[n].key = header_entries[n].key;
+                buffer[n].value = header_entries[n].value;
+            }
+
+            res.headers = buffer.subspan(0, n);
+            res.content = from.content();
+            return res;
+        }
+
+        void on_client_accepted(int client_socket, std::function<http_response(const http_request& req)> callback) noexcept {
+            char buffer[max_header_size];
+            http1::header headers[max_header_lines];
+            http_response res{200};
+
+            try {
                 std::size_t header_len = 0;
 
                 do {
-                    const int size_read = ::recv(client_socket, buffer + header_len, sizeof(char) * (max_header_size - header_len), 0);
+                    ::ssize_t size_read;
+                    do {
+                        size_read = ::recv(client_socket, buffer + header_len, sizeof(char) * (max_header_size - header_len), 0);
+                    } while (size_read < 0 && errno == EINTR);
+
                     if (size_read < 0) {
                         throw std::system_error{errno, std::generic_category()};
                     }
 
                     header_len += size_read;
 
-                    http1::request parsed_req{};
-                    const auto parse_result = http1::parse_request(parsed_req, headers, std::string_view{buffer, header_len});
+                    http1::request http1_req{};
+                    const auto parse_result = http1::parse_request(http1_req, headers, std::string_view{buffer, header_len});
                     switch (parse_result) {
                         case http1::parse_result::done:
                             break;
@@ -53,21 +77,38 @@ namespace mio {
                             throw std::runtime_error{"invalid request"};
                     }
 
-                    const auto req = construct_request(parsed_req);
-                    callback(req);
-
-                    ::send(client_socket, "OK\r\n", 2, 0);
+                    const auto req = construct_request(http1_req);
+                    res = callback(req);
                     break;
                 } while (true);
             } catch (...) {
-                ::send(client_socket, "server error\r\n", 14, 0);
+                res = http_response{
+                    400,
+                    http_headers{
+                        {"Content-Type", "text/html; charset=utf8"},
+                    },
+                    "<html><body>400 Internal Server Error</body></html>"};
+            }
+
+            const auto http1_res = construct_http1_response(res, headers);
+
+            try {
+                std::ostringstream oss;
+                http1::write_response(oss, http1_res);
+
+                const auto s = oss.str();
+                ::ssize_t size_sent;
+                do {
+                    size_sent = ::send(client_socket, s.data(), s.size(), 0);
+                } while (size_sent < 0 && errno == EINTR);
+            } catch (...) {
             }
 
             ::close(client_socket);
         }
     } // namespace
 
-    void http_server::listen(std::uint16_t port, std::function<void(const http_request& req)> callback) {
+    void http_server::listen(std::uint16_t port, std::function<http_response(const http_request& req)> callback) {
         const auto socket = ::socket(AF_INET, SOCK_STREAM, 0);
         if (socket < 0) {
             throw std::system_error{errno, std::generic_category()};

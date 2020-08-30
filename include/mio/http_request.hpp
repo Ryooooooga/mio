@@ -15,6 +15,13 @@ namespace mio {
 
         ~http_request() noexcept = default;
 
+        // Uncopyable and movable
+        http_request(const http_request&) = delete;
+        http_request(http_request&&) = default;
+
+        http_request& operator=(const http_request&) = delete;
+        http_request& operator=(http_request&&) = default;
+
         [[nodiscard]] std::string_view method() const noexcept {
             return method_;
         }
@@ -40,14 +47,6 @@ namespace mio {
         std::string request_uri_;
         std::string http_version_;
         http_headers headers_;
-
-    private:
-        // Uncopyable and unmovable
-        http_request(const http_request&) = delete;
-        http_request(http_request&&) = delete;
-
-        http_request& operator=(const http_request&) = delete;
-        http_request& operator=(http_request&&) = delete;
     };
 } // namespace mio
 

@@ -1,15 +1,10 @@
-#ifndef INCLUDE_mio_http1_request_parser_hpp
-#define INCLUDE_mio_http1_request_parser_hpp
+#ifndef INCLUDE_mio_http1_request_hpp
+#define INCLUDE_mio_http1_request_hpp
 
 #include <span>
-#include <string_view>
+#include "header.hpp"
 
 namespace mio::http1 {
-    struct header {
-        std::string_view key;
-        std::string_view value;
-    };
-
     struct request {
         std::string_view method;
         std::string_view request_uri;
@@ -27,4 +22,4 @@ namespace mio::http1 {
     parse_result parse_request(request& req, std::span<header> headers, std::string_view input);
 } // namespace mio::http1
 
-#endif // INCLUDE_mio_http1_request_parser_hpp
+#endif // INCLUDE_mio_http1_request_hpp

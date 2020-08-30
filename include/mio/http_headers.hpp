@@ -2,6 +2,7 @@
 #define INCLUDE_mio_http_header_hpp
 
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
@@ -17,6 +18,24 @@ namespace mio {
     class http_headers {
     public:
         http_headers() = default;
+
+        explicit http_headers(std::initializer_list<http_header> headers)
+            : entries_()
+            , indices_() {
+            for (const http_header& header : headers) {
+                append(header.key, header.value);
+            }
+        }
+
+        template <std::ranges::range Headers>
+        explicit http_headers(const Headers& headers)
+            : entries_()
+            , indices_() {
+            for (const http_header& header : headers) {
+                append(header.key, header.value);
+            }
+        }
+
         ~http_headers() noexcept = default;
 
         // Uncopyable and movable

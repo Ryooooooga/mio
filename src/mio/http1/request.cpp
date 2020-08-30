@@ -1,4 +1,4 @@
-#include "mio/http1/request_parser.hpp"
+#include "mio/http1/request.hpp"
 
 // Ensure character encoding follows ASCII
 static_assert('\t' == 0x09 && '\n' == 0x0a && '\r' == 0x0d);

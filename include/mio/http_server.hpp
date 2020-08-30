@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include "mio/http_request.hpp"
+#include "mio/http_response.hpp"
 
 namespace mio {
     class http_server {
@@ -11,7 +12,7 @@ namespace mio {
         http_server() = default;
         ~http_server() noexcept = default;
 
-        void listen(std::uint16_t port, std::function<void(const http_request& req)> callback);
+        void listen(std::uint16_t port, std::function<http_response(const http_request& req)> callback);
 
     private:
         // Uncopyable and unmovable

@@ -1,5 +1,6 @@
 add_library(mio STATIC
-    http1/request_parser.cpp
+    http1/request.cpp
+    http1/response.cpp
     http_headers.cpp
     http_server.cpp
 )

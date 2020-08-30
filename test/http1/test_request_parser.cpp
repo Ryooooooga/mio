@@ -15,7 +15,7 @@ void test_request_parser() {
 
         const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input);
 
-        assert(result == mio::http1::parse_result::done);
+        assert(result == mio::http1::parse_result::completed);
         assert(req.method == "GET");
         assert(req.request_uri == "/index.html");
         assert(req.http_version == "HTTP/1.1");

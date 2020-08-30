@@ -48,9 +48,9 @@ namespace mio::http1 {
             return (c & 0x80) == 0 && table[c & 0x7f] == 1;
         }
 
-#define CHECK_RESULT(expr)                                                                              \
-    if (const ::mio::http1::parse_result result = (expr); result != ::mio::http1::parse_result::done) { \
-        return result;                                                                                  \
+#define CHECK_RESULT(expr)                                                                                   \
+    if (const ::mio::http1::parse_result result = (expr); result != ::mio::http1::parse_result::completed) { \
+        return result;                                                                                       \
     }
 
 #define DISCARD_ERROR(expr)                                                                                    \
@@ -71,7 +71,7 @@ namespace mio::http1 {
             }
 
             i++;
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         template <typename F>
@@ -90,7 +90,7 @@ namespace mio::http1 {
                 return parse_result::invalid;
             }
 
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         parse_result expect_char(char c, std::string_view s, std::size_t& i) {
@@ -100,7 +100,7 @@ namespace mio::http1 {
             }
 
             i++;
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         parse_result expect_spaces(std::string_view s, std::size_t& i) {
@@ -114,7 +114,7 @@ namespace mio::http1 {
             }
 
             i += 2;
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         parse_result parse_token(std::string_view& token, std::string_view s, std::size_t& i) {
@@ -122,7 +122,7 @@ namespace mio::http1 {
             CHECK_RESULT(expect_n(is_token, s, i));
 
             token = s.substr(pos, i - pos);
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         parse_result parse_request_uri(std::string_view& request_uri, std::string_view s, std::size_t& i) {
@@ -134,7 +134,7 @@ namespace mio::http1 {
             CHECK_RESULT(expect_n(is_uri, s, i));
 
             request_uri = s.substr(pos, i - pos);
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         parse_result parse_http_version(std::string_view& http_version, std::string_view s, std::size_t& i) {
@@ -149,7 +149,7 @@ namespace mio::http1 {
             CHECK_RESULT(expect_n(is_digit, s, i));
 
             http_version = s.substr(pos, i - pos);
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         parse_result parse_header_value(std::string_view& value, std::string_view s, std::size_t& i) {
@@ -173,7 +173,7 @@ namespace mio::http1 {
                 value.remove_suffix(1);
             }
 
-            return parse_result::done;
+            return parse_result::completed;
         }
 
         parse_result parse_headers(std::span<header>& headers, std::span<header> buffer, std::string_view s, std::size_t& i) {
@@ -211,7 +211,7 @@ namespace mio::http1 {
 
             CHECK_RESULT(parse_headers(req.headers, headers, input, i));
 
-            return parse_result::done;
+            return parse_result::completed;
         }
     } // namespace
 

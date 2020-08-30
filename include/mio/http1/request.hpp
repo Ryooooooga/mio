@@ -13,7 +13,7 @@ namespace mio::http1 {
     };
 
     enum class [[nodiscard]] parse_result{
-        done,
+        completed,
         in_progress,
         invalid,
         too_many_headers,

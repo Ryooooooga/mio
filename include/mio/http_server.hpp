@@ -3,16 +3,29 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include "mio/http_request.hpp"
 #include "mio/http_response.hpp"
 
 namespace mio {
+    class application;
+
+    namespace sockets {
+        class socket;
+    } // namespace sockets
+
     class http_server {
     public:
-        http_server() = default;
-        ~http_server() noexcept = default;
+        http_server(std::unique_ptr<application>&& app);
+        ~http_server() noexcept;
 
-        void listen(std::uint16_t port, std::function<http_response(const http_request& req)> callback);
+        void listen(std::uint16_t port);
+
+    private:
+        static void on_client_accepted(http_server* self, sockets::socket client_socket) noexcept;
+
+    private:
+        std::unique_ptr<application> app_;
 
     private:
         // Uncopyable and unmovable

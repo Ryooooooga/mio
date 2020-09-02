@@ -34,7 +34,7 @@ namespace {
 
     void test_routing_tree() {
         {
-            mio::routing_tree tree{};
+            mio::routing_tree tree{"", std::nullopt};
             tree.insert("/", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET /"}; });
             tree.insert("foo", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET foo"}; });
             tree.insert("bar", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET bar"}; });
@@ -57,7 +57,7 @@ namespace {
             test_tree_not_found(tree, "bar", "POST");
         }
         {
-            mio::routing_tree tree{};
+            mio::routing_tree tree{"", std::nullopt};
             tree.insert("foo", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET foo"}; });
             tree.insert("foo/bar", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET foo/bar"}; });
             tree.insert("baz/bar", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET baz/bar"}; });
@@ -76,7 +76,7 @@ namespace {
             test_tree_not_found(tree, "foo//bar", "POST");
         }
         {
-            mio::routing_tree tree{};
+            mio::routing_tree tree{"", std::nullopt};
             tree.insert("foo/:id/a", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET foo/:id/a"}; });
             tree.insert("foo/:XX/b", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET foo/:XX/b"}; });
 
@@ -139,7 +139,7 @@ namespace {
         test_request(router, "POST", "/", "POST /");
         test_request(router, "GET", "/10", "GET /:id/");
         test_request(router, "GET", "/10/foo", "GET /:id/foo");
-        // test_request(router, "GET", "/foo/foo", "GET /:id/foo");
+        test_request(router, "GET", "/foo/foo", "GET /:id/foo");
         test_request(router, "GET", "/foo/xxx/baz/", "GET /foo/:bar/baz/");
         test_request(router, "GET", "/foo/xxx/baz/x/", "GET /foo/:bar/baz/x");
         test_request(router, "GET", "/xxx/yyy/zzz", "GET /xxx/yyy/zzz");

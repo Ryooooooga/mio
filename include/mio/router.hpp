@@ -17,15 +17,16 @@ namespace mio {
 
     class routing_tree {
     public:
-        explicit routing_tree(std::optional<std::string>&& placeholder = std::nullopt);
+        routing_tree(std::string_view name, std::optional<std::string>&& placeholder);
         ~routing_tree() noexcept = default;
 
-        void insert(const std::string& path, const std::string& method, request_handler&& handler);
+        void insert(std::string_view path, const std::string& method, request_handler&& handler);
 
-        const request_handler* find(const std::string& path, const std::string& method) const;
+        const request_handler* find(std::string_view path, const std::string& method) const;
 
     private:
-        std::unordered_map<std::string, std::unique_ptr<routing_tree>> children_;
+        std::string name_;
+        std::unordered_map<std::string_view, std::unique_ptr<routing_tree>> children_;
         std::vector<std::unique_ptr<routing_tree>> wildcards_;
         std::unordered_map<std::string, request_handler> actions_;
         std::optional<std::string> placeholder_;
@@ -96,11 +97,14 @@ namespace mio {
 
     class router {
     public:
-        router() = default;
+        router()
+            : tree_("", std::nullopt) {
+        }
+
         ~router() noexcept = default;
 
         void add(std::string_view path, std::string_view method, request_handler&& handler) {
-            tree_.insert(std::string{path}, std::string{method}, std::move(handler));
+            tree_.insert(path, std::string{method}, std::move(handler));
         }
 
         void get(std::string_view path, request_handler&& handler) {

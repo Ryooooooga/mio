@@ -24,10 +24,11 @@ namespace mio {
         application_base() = default;
         virtual ~application_base() noexcept = default;
 
-        http_response on_request(http_request& req) override;
+        virtual http_response on_request(http_request& req) override;
+        virtual http_response on_routing_not_found(http_request& req);
 
-        http_response on_error(const std::exception& e) noexcept override;
-        http_response on_unknown_error() noexcept override;
+        virtual http_response on_error(const std::exception& e) noexcept override;
+        virtual http_response on_unknown_error() noexcept override;
 
         router& get_router() noexcept {
             return router_;

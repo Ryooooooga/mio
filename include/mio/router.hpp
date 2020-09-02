@@ -129,7 +129,7 @@ namespace mio {
             std::invoke(f, scope);
         }
 
-        http_response handle_request(http_request& req) const;
+        std::optional<http_response> handle_request(http_request& req) const;
 
     private:
         routing_tree tree_;

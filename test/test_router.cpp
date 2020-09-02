@@ -96,10 +96,15 @@ namespace {
         mio::http_headers headers{};
         mio::http_request req{method, path, "HTTP/1.1", std::move(headers)};
 
-        const mio::http_response res = router.handle_request(req);
-        if (res.content() != expected_content) {
-            std::cerr << method << " " << path << ": res.content() != " << expected_content << " (actual " << res.content() << ")" << std::endl;
-            assert(res.content() == expected_content);
+        const std::optional<mio::http_response> res = router.handle_request(req);
+        if (!res) {
+            std::cerr << method << " " << path << ": res == nullopt" << std::endl;
+            assert(res);
+        }
+
+        if (res->content() != expected_content) {
+            std::cerr << method << " " << path << ": res->content() != " << expected_content << " (actual " << res->content() << ")" << std::endl;
+            assert(res->content() == expected_content);
         }
     }
 
@@ -107,10 +112,10 @@ namespace {
         mio::http_headers headers{};
         mio::http_request req{method, path, "HTTP/1.1", std::move(headers)};
 
-        const mio::http_response res = router.handle_request(req);
-        if (res.status_code() != 404) {
-            std::cerr << method << " " << path << ": res.status_code() != 404 (actual " << res.status_code() << ")" << std::endl;
-            assert(res.status_code() == 404);
+        const std::optional<mio::http_response> res = router.handle_request(req);
+        if (res) {
+            std::cerr << method << " " << path << ": res != nullopt (" << res->content() << ")" << std::endl;
+            assert(!res);
         }
     }
 

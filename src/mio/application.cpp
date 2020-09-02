@@ -4,7 +4,22 @@
 
 namespace mio {
     http_response application_base::on_request(http_request& req) {
-        return get_router().handle_request(req);
+        auto res = get_router().handle_request(req);
+        if (!res) {
+            res = on_routing_not_found(req);
+        }
+
+        return std::move(*res);
+    }
+
+    http_response application_base::on_routing_not_found([[maybe_unused]] http_request& req) {
+        return http_response{
+            404,
+            http_headers{
+                {"content-type", "text/html; charset=utf8"},
+            },
+            "404 not found",
+        };
     }
 
     http_response application_base::on_error(const std::exception& e) noexcept {

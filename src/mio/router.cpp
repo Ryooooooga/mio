@@ -94,17 +94,11 @@ namespace mio {
         return nullptr;
     }
 
-    http_response router::handle_request(http_request& req) const {
+    std::optional<http_response> router::handle_request(http_request& req) const {
         if (const auto handler = tree_.find(req.request_uri(), req.method())) {
             return (*handler)(req);
         }
 
-        return http_response{
-            404,
-            http_headers{
-                {"content-type", "text/html; charset=utf-8"},
-            },
-            req.request_uri() + " not found",
-        };
+        return std::nullopt;
     }
 } // namespace mio

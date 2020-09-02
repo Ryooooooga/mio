@@ -1,5 +1,8 @@
 #include "mio/router.hpp"
 
+#include "mio/http_request.hpp"
+#include "mio/http_response.hpp"
+
 namespace mio {
     routing_tree::routing_tree(std::optional<std::string>&& placeholder)
         : children_()
@@ -92,5 +95,19 @@ namespace mio {
         }
 
         return nullptr;
+    }
+
+    http_response router::handle_request(http_request& req) const {
+        if (const auto handler = tree_.find(req.request_uri(), req.method())) {
+            return (*handler)(req);
+        }
+
+        return http_response{
+            404,
+            http_headers{
+                {"content-type", "text/html; charset=utf-8"},
+            },
+            req.request_uri() + " not found",
+        };
     }
 } // namespace mio

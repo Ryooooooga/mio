@@ -13,7 +13,7 @@ namespace mio {
             std::string t{};
             t.reserve(s.size());
 
-            std::transform(std::begin(s), std::end(s), std::back_inserter(t), to_ascii_lower);
+            std::ranges::copy(std::ranges::views::transform(s, to_ascii_lower), std::back_inserter(t));
             return t;
         }
     } // namespace

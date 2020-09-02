@@ -21,11 +21,9 @@ namespace mio {
 
         if (path.empty()) {
             // Register the request handler.
-            if (const auto it = actions_.find(method); it != std::end(actions_)) {
+            if (const auto [it, inserted] = actions_.try_emplace(method, std::move(handler)); !inserted) {
                 throw std::runtime_error{"routing is already registered"};
             }
-
-            actions_[method] = std::move(handler);
             return;
         }
 

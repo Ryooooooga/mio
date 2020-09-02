@@ -8,6 +8,8 @@ namespace mio {
     class http_request;
     class router;
 
+    using middleware = std::function<void(http_request&, http_response&)>;
+
     class application {
     public:
         application() = default;
@@ -38,8 +40,11 @@ namespace mio {
             return router_;
         }
 
+        void use(middleware&& middleware);
+
     private:
         router router_;
+        std::vector<middleware> middlewares_;
 
     private:
         // Uncopyable and unmovable

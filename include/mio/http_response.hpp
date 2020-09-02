@@ -31,6 +31,10 @@ namespace mio {
             return status_code_;
         }
 
+        void set_status_code(std::int32_t status_code) noexcept {
+            status_code_ = status_code;
+        }
+
         [[nodiscard]] http_headers& headers() noexcept {
             return headers_;
         }
@@ -45,6 +49,10 @@ namespace mio {
 
         [[nodiscard]] std::size_t content_length() const noexcept {
             return content_.size();
+        }
+
+        void body(std::string_view s) {
+            content_ = s;
         }
 
         void write(std::string_view s) {

@@ -2,6 +2,7 @@ add_library(mio STATIC
     http1/request.cpp
     http1/response.cpp
     sockets/socket.cpp
+    middlewares/static.cpp
     application.cpp
     http_headers.cpp
     http_server.cpp

@@ -17,33 +17,15 @@ namespace mio {
     }
 
     http_response application_base::on_routing_not_found([[maybe_unused]] http_request& req) {
-        return http_response{
-            404,
-            http_headers{
-                {"content-type", "text/html; charset=utf8"},
-            },
-            "404 not found",
-        };
+        return http_response::html(404, "404 not found");
     }
 
     http_response application_base::on_error(const std::exception& e) noexcept {
-        return http_response{
-            500,
-            http_headers{
-                {"content-type", "text/html; charset=utf8"},
-            },
-            e.what(),
-        };
+        return http_response::html(404, e.what());
     }
 
     http_response application_base::on_unknown_error() noexcept {
-        return http_response{
-            500,
-            http_headers{
-                {"content-type", "text/html; charset=utf8"},
-            },
-            "500 Internal Server Error",
-        };
+        return http_response::html(500, "500 Internal Server Error");
     }
 
     void application_base::use(middleware&& middleware) {

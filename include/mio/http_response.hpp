@@ -59,6 +59,26 @@ namespace mio {
             content_ += s;
         }
 
+        static http_response html(std::int32_t status_code, std::string_view content) {
+            return http_response{
+                status_code,
+                http_headers{
+                    {"content-type", "text/html; charset=utf8"},
+                },
+                content,
+            };
+        }
+
+        static http_response json(std::int32_t status_code, std::string_view content) {
+            return http_response{
+                status_code,
+                http_headers{
+                    {"content-type", "application/json; charset=utf8"},
+                },
+                content,
+            };
+        }
+
     private:
         std::int32_t status_code_;
         http_headers headers_;

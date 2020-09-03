@@ -6,11 +6,12 @@
 namespace mio {
     class http_request {
     public:
-        http_request(std::string_view method, std::string_view request_uri, std::string_view http_version, http_headers&& headers)
+        http_request(std::string_view method, std::string_view request_uri, std::string_view http_version, http_headers&& headers, std::vector<std::byte>&& body = {})
             : method_(method)
             , request_uri_(request_uri)
             , http_version_(http_version)
-            , headers_(std::move(headers)) {
+            , headers_(std::move(headers))
+            , body_(std::move(body)) {
         }
 
         ~http_request() noexcept = default;
@@ -42,11 +43,20 @@ namespace mio {
             return headers_;
         }
 
+        [[nodiscard]] std::span<const std::byte> body() const noexcept {
+            return body_;
+        }
+
+        [[nodiscard]] std::string_view body_as_text() const noexcept {
+            return std::string_view{reinterpret_cast<const char*>(body_.data()), body_.size()};
+        }
+
     private:
         std::string method_;
         std::string request_uri_;
         std::string http_version_;
         http_headers headers_;
+        std::vector<std::byte> body_;
     };
 } // namespace mio
 

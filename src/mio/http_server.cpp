@@ -17,7 +17,7 @@ namespace mio {
         constexpr std::size_t max_header_size = 4096;
         constexpr std::size_t max_header_lines = 100;
 
-        http1::response construct_http1_response(const http_response& from, std::span<http1::header> buffer) {
+        http1::response convert_to_http1_response(const http_response& from, std::span<http1::header> buffer) {
             http1::response res{};
             res.http_version = "HTTP/1.1";
             res.status_code = from.status_code();
@@ -65,19 +65,21 @@ namespace mio {
                 http1::request http1_req{};
 
                 for (;;) {
-                    const auto size_read = client_socket.receive(buffer + header_size, sizeof(char) * (max_header_size - header_size));
+                    const auto size_read = client_socket.receive(buffer + header_size, max_header_size - header_size);
+                    if (size_read == 0) {
+                        return; // Connection closed.
+                    }
+
                     header_size += size_read;
 
                     const auto parse_result = http1::parse_request(http1_req, headers, std::string_view{buffer, header_size});
                     if (parse_result == http1::parse_result::completed) {
                         break;
-                    } else if (size_read == 0) {
-                        return; // Connection closed.
                     } else if (parse_result == http1::parse_result::in_progress) {
                         continue;
+                    } else {
+                        throw std::runtime_error{"invalid request"};
                     }
-
-                    throw std::runtime_error{"invalid request"};
                 }
 
                 http_headers headers{};
@@ -85,11 +87,24 @@ namespace mio {
                     headers.append(header.key, header.value);
                 }
 
+                std::vector<std::byte> body;
+                body.resize(headers.content_length());
+
+                for (size_t pos = 0; pos < headers.content_length();) {
+                    const auto size_read = client_socket.receive(body.data() + pos, headers.content_length() - pos);
+                    if (size_read == 0) {
+                        return; // Connection closed.
+                    }
+
+                    pos += size_read;
+                }
+
                 http_request req{
                     http1_req.method,
                     http1_req.request_uri,
                     http1_req.http_version,
                     std::move(headers),
+                    std::move(body),
                 };
 
                 keep_alive = req.headers().get("connection") == "keep-alive";
@@ -106,7 +121,7 @@ namespace mio {
             try {
                 res.headers().set("connection", keep_alive ? "keep-alive" : "close");
 
-                const auto http1_res = construct_http1_response(res, headers);
+                const auto http1_res = convert_to_http1_response(res, headers);
 
                 std::ostringstream oss;
                 http1::write_response(oss, http1_res);

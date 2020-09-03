@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include "mio/http_request.hpp"
-#include "mio/http_response.hpp"
+#include "http_request.hpp"
+#include "http_response.hpp"
 
 namespace mio {
     class application;

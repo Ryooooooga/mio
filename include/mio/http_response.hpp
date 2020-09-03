@@ -1,7 +1,7 @@
 #ifndef INCLUDE_mio_http_response_hpp
 #define INCLUDE_mio_http_response_hpp
 
-#include "mio/http_headers.hpp"
+#include "http_headers.hpp"
 
 namespace mio {
     class http_response {

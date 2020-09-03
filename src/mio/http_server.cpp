@@ -1,9 +1,7 @@
 #include "mio/http_server.hpp"
 
 #include <cassert>
-#include <iostream>
 #include <sstream>
-#include <system_error>
 #include <thread>
 
 #include <netinet/in.h>
@@ -63,47 +61,59 @@ namespace mio {
     }
 
     void http_server::on_client_accepted(http_server* self, sockets::socket client_socket) noexcept {
-        char buffer[max_header_size];
-        http1::header headers[max_header_lines];
-        http_response res{500};
-
         const auto& app = self->app_;
 
-        try {
-            std::size_t header_size = 0;
-            http1::request http1_req{};
+        bool keep_alive;
+        do {
+            char buffer[max_header_size];
+            http1::header headers[max_header_lines];
+            http_response res{500};
 
-            for (;;) {
-                const auto size_read = client_socket.receive(buffer + header_size, sizeof(char) * (max_header_size - header_size));
-                header_size += size_read;
+            try {
+                std::size_t header_size = 0;
+                http1::request http1_req{};
 
-                const auto parse_result = http1::parse_request(http1_req, headers, std::string_view{buffer, header_size});
-                if (parse_result == http1::parse_result::completed) {
-                    break;
-                } else if (parse_result == http1::parse_result::in_progress && size_read > 0) {
-                    continue;
+                for (;;) {
+                    const auto size_read = client_socket.receive(buffer + header_size, sizeof(char) * (max_header_size - header_size));
+                    header_size += size_read;
+
+                    const auto parse_result = http1::parse_request(http1_req, headers, std::string_view{buffer, header_size});
+                    if (parse_result == http1::parse_result::completed) {
+                        break;
+                    } else if (size_read == 0) {
+                        return; // Connection closed.
+                    } else if (parse_result == http1::parse_result::in_progress) {
+                        continue;
+                    }
+
+                    throw std::runtime_error{"invalid request"};
                 }
 
-                throw std::runtime_error{"invalid request"};
+                auto req = construct_request(http1_req);
+
+                keep_alive = req.headers().get("connection") == "keep-alive";
+                req.headers().remove("connection");
+                req.headers().remove("keep-alive");
+
+                res = app->on_request(req);
+            } catch (const std::exception& e) {
+                res = app->on_error(e);
+            } catch (...) {
+                res = app->on_unknown_error();
             }
 
-            auto req = construct_request(http1_req);
-            res = app->on_request(req);
-        } catch (const std::exception& e) {
-            res = app->on_error(e);
-        } catch (...) {
-            res = app->on_unknown_error();
-        }
+            try {
+                res.headers().set("connection", keep_alive ? "keep-alive" : "close");
 
-        try {
-            const auto http1_res = construct_http1_response(res, headers);
+                const auto http1_res = construct_http1_response(res, headers);
 
-            std::ostringstream oss;
-            http1::write_response(oss, http1_res);
+                std::ostringstream oss;
+                http1::write_response(oss, http1_res);
 
-            const auto s = oss.str();
-            client_socket.send(s.data(), s.size());
-        } catch (...) {
-        }
+                const auto s = oss.str();
+                client_socket.send(s.data(), s.size());
+            } catch (...) {
+            }
+        } while (keep_alive);
     }
 } // namespace mio

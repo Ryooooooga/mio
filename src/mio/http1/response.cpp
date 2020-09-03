@@ -8,8 +8,8 @@ namespace mio::http1 {
             ostream << header.key << ": " << header.value << "\r\n";
         }
 
-        ostream << "content-length: " << res.content.size() << "\r\n";
+        ostream << "content-length: " << res.body.size() << "\r\n";
         ostream << "\r\n";
-        ostream << res.content;
+        ostream.write(reinterpret_cast<const char*>(res.body.data()), res.body.size());
     }
 } // namespace mio::http1

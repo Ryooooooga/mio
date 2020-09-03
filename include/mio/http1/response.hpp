@@ -12,7 +12,7 @@ namespace mio::http1 {
         std::string_view http_version;
         std::int32_t status_code;
         std::span<header> headers;
-        std::string_view content;
+        std::span<const std::byte> body;
     };
 
     inline const std::unordered_map<std::int32_t, std::string_view> status_codes = {

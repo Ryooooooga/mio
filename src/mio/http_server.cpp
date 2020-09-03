@@ -17,15 +17,6 @@ namespace mio {
         constexpr std::size_t max_header_size = 4096;
         constexpr std::size_t max_header_lines = 100;
 
-        http_request construct_request(const http1::request& from) {
-            http_headers headers{};
-            for (const auto& header : from.headers) {
-                headers.append(header.key, header.value);
-            }
-
-            return http_request{from.method, from.request_uri, from.http_version, std::move(headers)};
-        }
-
         http1::response construct_http1_response(const http_response& from, std::span<http1::header> buffer) {
             http1::response res{};
             res.http_version = "HTTP/1.1";
@@ -38,7 +29,7 @@ namespace mio {
             }
 
             res.headers = buffer.subspan(0, n);
-            res.content = from.content();
+            res.body = from.body();
             return res;
         }
     } // namespace
@@ -89,7 +80,17 @@ namespace mio {
                     throw std::runtime_error{"invalid request"};
                 }
 
-                auto req = construct_request(http1_req);
+                http_headers headers{};
+                for (const auto& header : http1_req.headers) {
+                    headers.append(header.key, header.value);
+                }
+
+                http_request req{
+                    http1_req.method,
+                    http1_req.request_uri,
+                    http1_req.http_version,
+                    std::move(headers),
+                };
 
                 keep_alive = req.headers().get("connection") == "keep-alive";
                 req.headers().remove("connection");

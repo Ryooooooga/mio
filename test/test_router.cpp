@@ -7,7 +7,7 @@
 #include "mio/http_response.hpp"
 
 namespace {
-    void test_tree(const mio::routing_tree& tree, const std::string& path, const std::string& method, std::string_view expected_content) {
+    void test_tree(const mio::routing_tree& tree, const std::string& path, const std::string& method, std::string_view expected_body) {
         mio::http_headers headers{};
         mio::http_request req{method, path, "HTTP/1.1", std::move(headers)};
 
@@ -18,9 +18,9 @@ namespace {
         }
 
         const auto res = (*handler)(req);
-        if (res.content() != expected_content) {
-            std::cerr << method << " " << path << ": res.content() != " << expected_content << " (actual " << res.content() << ")" << std::endl;
-            assert(res.content() == expected_content);
+        if (res.body_as_text() != expected_body) {
+            std::cerr << method << " " << path << ": res.body_as_text() != " << expected_body << " (actual " << res.body_as_text() << ")" << std::endl;
+            assert(res.body_as_text() == expected_body);
         }
     }
 
@@ -92,7 +92,7 @@ namespace {
         }
     }
 
-    void test_request(const mio::router& router, std::string_view method, std::string_view path, std::string_view expected_content) {
+    void test_request(const mio::router& router, std::string_view method, std::string_view path, std::string_view expected_body) {
         mio::http_headers headers{};
         mio::http_request req{method, path, "HTTP/1.1", std::move(headers)};
 
@@ -102,9 +102,9 @@ namespace {
             assert(res);
         }
 
-        if (res->content() != expected_content) {
-            std::cerr << method << " " << path << ": res->content() != " << expected_content << " (actual " << res->content() << ")" << std::endl;
-            assert(res->content() == expected_content);
+        if (res->body_as_text() != expected_body) {
+            std::cerr << method << " " << path << ": res->body_as_text() != " << expected_body << " (actual " << res->body_as_text() << ")" << std::endl;
+            assert(res->body_as_text() == expected_body);
         }
     }
 
@@ -114,7 +114,7 @@ namespace {
 
         const std::optional<mio::http_response> res = router.handle_request(req);
         if (res) {
-            std::cerr << method << " " << path << ": res != nullopt (" << res->content() << ")" << std::endl;
+            std::cerr << method << " " << path << ": res != nullopt (" << res->body_as_text() << ")" << std::endl;
             assert(!res);
         }
     }

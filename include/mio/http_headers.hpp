@@ -19,22 +19,10 @@ namespace mio {
     public:
         http_headers() = default;
 
-        explicit http_headers(std::initializer_list<http_header> headers)
-            : entries_()
-            , indices_() {
-            for (const http_header& header : headers) {
-                append(header.key, header.value);
-            }
-        }
+        explicit http_headers(std::initializer_list<http_header> headers);
 
         template <std::ranges::range Headers>
-        explicit http_headers(const Headers& headers)
-            : entries_()
-            , indices_() {
-            for (const http_header& header : headers) {
-                append(header.key, header.value);
-            }
-        }
+        explicit http_headers(const Headers& headers);
 
         ~http_headers() noexcept = default;
 
@@ -45,7 +33,7 @@ namespace mio {
         http_headers& operator=(const http_headers&) = delete;
         http_headers& operator=(http_headers&&) = default;
 
-        [[nodiscard]] std::optional<std::string> get(std::string_view key) const;
+        [[nodiscard]] std::optional<std::string_view> get(std::string_view key) const;
         void set(std::string_view key, std::string_view value);
         void append(std::string_view key, std::string_view value);
         void remove(std::string_view key);
@@ -58,9 +46,15 @@ namespace mio {
             return entries_;
         }
 
+        [[nodiscard]] std::size_t content_length() const noexcept {
+            return content_length_;
+        }
+
     private:
         std::vector<http_header> entries_;
         std::unordered_map<std::string, std::size_t> indices_;
+
+        std::size_t content_length_;
     };
 } // namespace mio
 

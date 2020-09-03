@@ -20,8 +20,10 @@ namespace {
             {"last-modified", "Sun, 30 Aug 2020 01:23:45 GMT"},
         };
 
+        const std::string_view body = "<p>Hello</p>";
+
         res.headers = headers;
-        res.content = "<p>Hello</p>";
+        res.body = std::as_bytes(std::span{body});
 
         std::ostringstream oss{};
         mio::http1::write_response(oss, res);

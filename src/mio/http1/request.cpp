@@ -201,7 +201,7 @@ namespace mio::http1 {
             }
         }
 
-        parse_result parse_request(request& req, std::span<header> headers, std::string_view input, std::size_t& i) {
+        parse_result parse_request_impl(request& req, std::span<header> headers, std::string_view input, std::size_t& i) {
             CHECK_RESULT(parse_token(req.method, input, i));
             CHECK_RESULT(expect_spaces(input, i));
             CHECK_RESULT(parse_request_uri(req.request_uri, input, i));
@@ -215,8 +215,8 @@ namespace mio::http1 {
         }
     } // namespace
 
-    parse_result parse_request(request& req, std::span<header> headers, std::string_view input) {
-        std::size_t pos = 0;
-        return parse_request(req, headers, input, pos);
+    parse_result parse_request(request& req, std::span<header> headers, std::string_view input, std::size_t& header_size) {
+        header_size = 0;
+        return parse_request_impl(req, headers, input, header_size);
     }
 } // namespace mio::http1

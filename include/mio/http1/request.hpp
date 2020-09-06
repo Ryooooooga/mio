@@ -19,7 +19,7 @@ namespace mio::http1 {
         too_many_headers,
     };
 
-    parse_result parse_request(request& req, std::span<header> headers, std::string_view input);
+    parse_result parse_request(request& req, std::span<header> headers, std::string_view input, std::size_t& header_size);
 } // namespace mio::http1
 
 #endif // INCLUDE_mio_http1_request_hpp

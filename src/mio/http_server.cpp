@@ -61,18 +61,20 @@ namespace mio {
             http_response res{500};
 
             try {
-                std::size_t header_size = 0;
+                std::size_t pos = 0;
+                std::size_t header_size;
                 http1::request http1_req{};
 
+                // TODO: too large request header
                 for (;;) {
-                    const auto size_read = client_socket.receive(buffer + header_size, max_header_size - header_size);
+                    const auto size_read = client_socket.receive(buffer + pos, max_header_size - pos);
                     if (size_read == 0) {
                         return; // Connection closed.
                     }
 
-                    header_size += size_read;
+                    pos += size_read;
 
-                    const auto parse_result = http1::parse_request(http1_req, headers, std::string_view{buffer, header_size});
+                    const auto parse_result = http1::parse_request(http1_req, headers, std::string_view{buffer, pos}, header_size);
                     if (parse_result == http1::parse_result::completed) {
                         break;
                     } else if (parse_result == http1::parse_result::in_progress) {
@@ -87,10 +89,10 @@ namespace mio {
                     headers.append(header.key, header.value);
                 }
 
-                std::vector<std::byte> body;
+                std::vector<std::byte> body(reinterpret_cast<const std::byte*>(buffer + header_size), reinterpret_cast<const std::byte*>(buffer + pos));
                 body.resize(headers.content_length());
 
-                for (size_t pos = 0; pos < headers.content_length();) {
+                for (pos -= header_size; pos < headers.content_length();) {
                     const auto size_read = client_socket.receive(body.data() + pos, headers.content_length() - pos);
                     if (size_read == 0) {
                         return; // Connection closed.

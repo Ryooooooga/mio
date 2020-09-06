@@ -14,7 +14,8 @@ namespace {
                 "Accept:*/* \r\n"
                 "\r\n";
 
-            const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input);
+            std::size_t header_size;
+            const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input, header_size);
 
             assert(result == mio::http1::parse_result::completed);
             assert(req.method == "GET");
@@ -35,7 +36,8 @@ namespace {
                 "Host: example.com\r\n"
                 "Acce";
 
-            const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input);
+            std::size_t header_size;
+            const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input, header_size);
 
             assert(result == mio::http1::parse_result::in_progress);
         }
@@ -49,7 +51,8 @@ namespace {
                 "Accept:*/*\r\n"
                 "\r\n";
 
-            const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input);
+            std::size_t header_size;
+            const mio::http1::parse_result result = mio::http1::parse_request(req, buffer, input, header_size);
 
             assert(result == mio::http1::parse_result::too_many_headers);
         }

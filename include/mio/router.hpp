@@ -22,7 +22,7 @@ namespace mio {
 
         void insert(std::string_view path, const std::string& method, request_handler&& handler);
 
-        const request_handler* find(std::string_view path, const std::string& method) const;
+        const request_handler* find(std::string_view path, const std::string& method, std::vector<std::pair<std::string_view, std::string_view>>& params) const;
 
     private:
         std::string name_;

@@ -51,12 +51,24 @@ namespace mio {
             return std::string_view{reinterpret_cast<const char*>(body_.data()), body_.size()};
         }
 
+        void set_param(std::string_view key, std::string_view value) {
+            params_.emplace(key, value);
+        }
+
+        std::optional<std::string_view> param(const std::string& key) const {
+            if (const auto it = params_.find(key); it != std::end(params_)) {
+                return it->second;
+            }
+            return std::nullopt;
+        }
+
     private:
         std::string method_;
         std::string request_uri_;
         std::string http_version_;
         http_headers headers_;
         std::vector<std::byte> body_;
+        std::unordered_map<std::string, std::string> params_;
     };
 } // namespace mio
 

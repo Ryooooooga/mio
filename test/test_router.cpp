@@ -1,20 +1,27 @@
 #include "mio/router.hpp"
 
 #include <cassert>
+#include <algorithm>
 #include <iostream>
 
 #include "mio/http_request.hpp"
 #include "mio/http_response.hpp"
 
 namespace {
-    void test_tree(const mio::routing_tree& tree, const std::string& path, const std::string& method, std::string_view expected_body) {
+    void test_tree(const mio::routing_tree& tree, const std::string& path, const std::string& method, std::initializer_list<std::pair<std::string_view, std::string_view>> expected_params, std::string_view expected_body) {
         mio::http_headers headers{};
         mio::http_request req{method, path, "HTTP/1.1", std::move(headers)};
+        std::vector<std::pair<std::string_view, std::string_view>> params{};
 
-        const auto handler = tree.find(path, req.method());
+        const auto handler = tree.find(path, req.method(), params);
         if (handler == nullptr) {
             std::cerr << method << " " << path << ": not found" << std::endl;
             assert(handler != nullptr);
+        }
+
+        if (!std::ranges::equal(params, expected_params)) {
+            std::cerr << method << " " << path << ": params not matched" << std::endl;
+            assert(std::ranges::equal(params, expected_params));
         }
 
         const auto res = (*handler)(req);
@@ -25,7 +32,9 @@ namespace {
     }
 
     void test_tree_not_found(const mio::routing_tree& tree, const std::string& path, const std::string& method) {
-        const auto handler = tree.find(path, method);
+        std::vector<std::pair<std::string_view, std::string_view>> params{};
+
+        const auto handler = tree.find(path, method, params);
         if (handler != nullptr) {
             std::cerr << method << " " << path << ": found" << std::endl;
             assert(handler == nullptr);
@@ -41,16 +50,16 @@ namespace {
             tree.insert("baz", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET baz"}; });
             tree.insert("baz", "POST", [](const mio::http_request&) { return mio::http_response{200, "POST baz"}; });
 
-            test_tree(tree, "/", "GET", "GET /");
-            test_tree(tree, "", "GET", "GET /");
-            test_tree(tree, "foo", "GET", "GET foo");
-            test_tree(tree, "bar", "GET", "GET bar");
-            test_tree(tree, "baz", "GET", "GET baz");
-            test_tree(tree, "baz", "POST", "POST baz");
+            test_tree(tree, "/", "GET", {}, "GET /");
+            test_tree(tree, "", "GET", {}, "GET /");
+            test_tree(tree, "foo", "GET", {}, "GET foo");
+            test_tree(tree, "bar", "GET", {}, "GET bar");
+            test_tree(tree, "baz", "GET", {}, "GET baz");
+            test_tree(tree, "baz", "POST", {}, "POST baz");
 
-            test_tree(tree, "/foo", "GET", "GET foo");
-            test_tree(tree, "foo/", "GET", "GET foo");
-            test_tree(tree, "/foo/", "GET", "GET foo");
+            test_tree(tree, "/foo", "GET", {}, "GET foo");
+            test_tree(tree, "foo/", "GET", {}, "GET foo");
+            test_tree(tree, "/foo/", "GET", {}, "GET foo");
 
             test_tree_not_found(tree, "foo//", "GET");
             test_tree_not_found(tree, "foo", "POST");
@@ -63,13 +72,13 @@ namespace {
             tree.insert("baz/bar", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET baz/bar"}; });
             tree.insert("baz/bar", "POST", [](const mio::http_request&) { return mio::http_response{200, "POST baz/bar"}; });
 
-            test_tree(tree, "foo", "GET", "GET foo");
-            test_tree(tree, "foo/bar", "GET", "GET foo/bar");
-            test_tree(tree, "baz/bar", "GET", "GET baz/bar");
-            test_tree(tree, "baz/bar", "POST", "POST baz/bar");
+            test_tree(tree, "foo", "GET", {}, "GET foo");
+            test_tree(tree, "foo/bar", "GET", {}, "GET foo/bar");
+            test_tree(tree, "baz/bar", "GET", {}, "GET baz/bar");
+            test_tree(tree, "baz/bar", "POST", {}, "POST baz/bar");
 
-            test_tree(tree, "/foo/bar/", "GET", "GET foo/bar");
-            test_tree(tree, "/baz/bar", "POST", "POST baz/bar");
+            test_tree(tree, "/foo/bar/", "GET", {}, "GET foo/bar");
+            test_tree(tree, "/baz/bar", "POST", {}, "POST baz/bar");
 
             test_tree_not_found(tree, "baz", "GET");
             test_tree_not_found(tree, "baz", "POST");
@@ -80,10 +89,10 @@ namespace {
             tree.insert("foo/:id/a", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET foo/:id/a"}; });
             tree.insert("foo/:XX/b", "GET", [](const mio::http_request&) { return mio::http_response{200, "GET foo/:XX/b"}; });
 
-            test_tree(tree, "foo/0/a", "GET", "GET foo/:id/a");
-            test_tree(tree, "/foo/XXX/a", "GET", "GET foo/:id/a");
-            test_tree(tree, "foo/1/b", "GET", "GET foo/:XX/b");
-            test_tree(tree, "/foo/YYY/b/", "GET", "GET foo/:XX/b");
+            test_tree(tree, "foo/0/a", "GET", {{"id", "0"}}, "GET foo/:id/a");
+            test_tree(tree, "/foo/XXX/a", "GET", {{"id", "XXX"}}, "GET foo/:id/a");
+            test_tree(tree, "foo/1/b", "GET", {{"XX", "1"}}, "GET foo/:XX/b");
+            test_tree(tree, "/foo/YYY/b/", "GET", {{"XX", "YYY"}}, "GET foo/:XX/b");
 
             test_tree_not_found(tree, "foo", "GET");
             test_tree_not_found(tree, "foo/a", "GET");

@@ -59,7 +59,7 @@ namespace mio {
         }
     }
 
-    const request_handler* routing_tree::find(std::string_view path, const std::string& method) const {
+    const request_handler* routing_tree::find(std::string_view path, const std::string& method, std::vector<std::pair<std::string_view, std::string_view>>& params) const {
         // Skips over the first '/'.
         // "/foo/bar" -> "foo/bar"
         if (path.starts_with('/')) {
@@ -78,22 +78,31 @@ namespace mio {
         const auto tail = path.substr(segment.size());
 
         if (const auto it = children_.find(segment); it != std::end(children_)) {
-            if (const auto handler = it->second->find(tail, method)) {
+            if (const auto handler = it->second->find(tail, method, params)) {
                 return handler;
             }
         }
 
         for (const auto& child : wildcards_) {
-            if (const auto handler = child->find(tail, method)) {
+            params.emplace_back(*child->placeholder_, segment);
+
+            if (const auto handler = child->find(tail, method, params)) {
                 return handler;
             }
+
+            params.pop_back();
         }
 
         return nullptr;
     }
 
     std::optional<http_response> router::handle_request(http_request& req) const {
-        if (const auto handler = tree_.find(req.request_uri(), req.method())) {
+        std::vector<std::pair<std::string_view, std::string_view>> params{};
+        if (const auto handler = tree_.find(req.request_uri(), req.method(), params)) {
+            for (const auto& [key, value] : params) {
+                req.set_param(key, value);
+            }
+
             return (*handler)(req);
         }
 

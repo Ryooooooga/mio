@@ -6,7 +6,7 @@
 class application : public mio::application_base {
 public:
     application() {
-        use(mio::middlewares::static_{"./examples/static"});
+        use(mio::middlewares::static_{"./examples/static/simple_http"});
     }
 };
 

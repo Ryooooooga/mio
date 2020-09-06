@@ -61,9 +61,6 @@ namespace mio {
         if (const auto it = indices_.find(key_lower); it != std::end(indices_)) {
             entries_[it->second].value = value;
         } else {
-            indices_.emplace(key_lower, entries_.size());
-            entries_.emplace_back(http_header{std::move(key_lower), std::string{value}});
-
             if (key_lower == "content-length") {
                 const auto content_length = parse_int<std::size_t>(value);
                 if (!content_length) {
@@ -72,6 +69,9 @@ namespace mio {
 
                 content_length_ = *content_length;
             }
+
+            indices_.emplace(key_lower, entries_.size());
+            entries_.emplace_back(http_header{std::move(key_lower), std::string{value}});
         }
     }
 
@@ -86,9 +86,6 @@ namespace mio {
             entry.value += ", ";
             entry.value += value;
         } else {
-            indices_.emplace(key_lower, entries_.size());
-            entries_.emplace_back(http_header{std::move(key_lower), std::string{value}});
-
             if (key_lower == "content-length") {
                 const auto content_length = parse_int<std::size_t>(value);
                 if (!content_length) {
@@ -97,6 +94,9 @@ namespace mio {
 
                 content_length_ = *content_length;
             }
+
+            indices_.emplace(key_lower, entries_.size());
+            entries_.emplace_back(http_header{std::move(key_lower), std::string{value}});
         }
     }
 

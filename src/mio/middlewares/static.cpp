@@ -51,7 +51,7 @@ namespace mio::middlewares {
     }
 
     void static_::operator()(http_request& req, http_response& res) const {
-        if ((req.method() == "GET" || req.method() == "HEAD") && res.status_code() != 404) {
+        if ((req.method() != "GET" && req.method() != "HEAD") || res.status_code() != 404) {
             return;
         }
 

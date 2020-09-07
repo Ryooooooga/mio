@@ -2,6 +2,7 @@
 
 #include "mio/http_request.hpp"
 #include "mio/http_response.hpp"
+#include "mio/uri.hpp"
 
 namespace mio {
     routing_tree::routing_tree(std::string_view name, std::optional<std::string>&& placeholder)
@@ -59,7 +60,7 @@ namespace mio {
         }
     }
 
-    const request_handler* routing_tree::find(std::string_view path, const std::string& method, std::vector<std::pair<std::string_view, std::string_view>>& params) const {
+    const request_handler* routing_tree::find(std::string_view path, const std::string& method, std::vector<std::pair<std::string_view, std::string>>& params) const {
         // Skips over the first '/'.
         // "/foo/bar" -> "foo/bar"
         if (path.starts_with('/')) {
@@ -84,7 +85,12 @@ namespace mio {
         }
 
         for (const auto& child : wildcards_) {
-            params.emplace_back(*child->placeholder_, segment);
+            auto param = decode_uri(segment);
+            if (!param) {
+                throw std::runtime_error{"invalid request"};
+            }
+
+            params.emplace_back(*child->placeholder_, std::move(*param));
 
             if (const auto handler = child->find(tail, method, params)) {
                 return handler;
@@ -97,7 +103,7 @@ namespace mio {
     }
 
     std::optional<http_response> router::handle_request(http_request& req) const {
-        std::vector<std::pair<std::string_view, std::string_view>> params{};
+        std::vector<std::pair<std::string_view, std::string>> params{};
         if (const auto handler = tree_.find(req.request_uri(), req.method(), params)) {
             for (const auto& [key, value] : params) {
                 req.set_param(key, value);

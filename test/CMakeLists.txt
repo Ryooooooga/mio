@@ -4,6 +4,7 @@ add_executable(test_mio
     http1/test_response.cpp
     test_http_headers.cpp
     test_router.cpp
+    test_uri.cpp
 )
 
 target_link_libraries(test_mio

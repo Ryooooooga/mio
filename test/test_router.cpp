@@ -8,10 +8,10 @@
 #include "mio/http_response.hpp"
 
 namespace {
-    void test_tree(const mio::routing_tree& tree, const std::string& path, const std::string& method, std::initializer_list<std::pair<std::string_view, std::string_view>> expected_params, std::string_view expected_body) {
+    void test_tree(const mio::routing_tree& tree, const std::string& path, const std::string& method, std::initializer_list<std::pair<std::string_view, std::string>> expected_params, std::string_view expected_body) {
         mio::http_headers headers{};
         mio::http_request req{method, path, "HTTP/1.1", std::move(headers)};
-        std::vector<std::pair<std::string_view, std::string_view>> params{};
+        std::vector<std::pair<std::string_view, std::string>> params{};
 
         const auto handler = tree.find(path, req.method(), params);
         if (handler == nullptr) {
@@ -32,7 +32,7 @@ namespace {
     }
 
     void test_tree_not_found(const mio::routing_tree& tree, const std::string& path, const std::string& method) {
-        std::vector<std::pair<std::string_view, std::string_view>> params{};
+        std::vector<std::pair<std::string_view, std::string>> params{};
 
         const auto handler = tree.find(path, method, params);
         if (handler != nullptr) {
@@ -93,6 +93,7 @@ namespace {
             test_tree(tree, "/foo/XXX/a", "GET", {{"id", "XXX"}}, "GET foo/:id/a");
             test_tree(tree, "foo/1/b", "GET", {{"XX", "1"}}, "GET foo/:XX/b");
             test_tree(tree, "/foo/YYY/b/", "GET", {{"XX", "YYY"}}, "GET foo/:XX/b");
+            test_tree(tree, "/foo/a%20b/b/", "GET", {{"XX", "a b"}}, "GET foo/:XX/b");
 
             test_tree_not_found(tree, "foo", "GET");
             test_tree_not_found(tree, "foo/a", "GET");

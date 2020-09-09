@@ -1,5 +1,7 @@
 #include "mio/bodies/x_www_form_url_encoded.hpp"
 
+#include <algorithm>
+
 #include "mio/http_request.hpp"
 #include "mio/uri.hpp"
 
@@ -15,7 +17,9 @@ namespace mio::bodies {
             const auto sep = expr.find('=');
 
             const auto key = expr.substr(0, sep);
-            const auto value = sep != std::string_view::npos ? expr.substr(sep + 1) : std::string_view{};
+            std::string value{sep != std::string_view::npos ? expr.substr(sep + 1) : std::string_view{}};
+
+            std::ranges::replace(value, '+', ' ');
 
             auto decoded_key = decode_uri(key);
             auto decoded_value = decode_uri(value);

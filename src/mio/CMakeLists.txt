@@ -1,4 +1,5 @@
 add_library(mio STATIC
+    bodies/x_www_form_url_encoded.cpp
     http1/request.cpp
     http1/response.cpp
     sockets/socket.cpp

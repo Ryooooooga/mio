@@ -11,7 +11,9 @@ namespace mio {
             , request_uri_(request_uri)
             , http_version_(http_version)
             , headers_(std::move(headers))
-            , body_(std::move(body)) {
+            , body_(std::move(body))
+            , params_()
+            , form_() {
         }
 
         ~http_request() noexcept = default;
@@ -51,8 +53,8 @@ namespace mio {
             return std::string_view{reinterpret_cast<const char*>(body_.data()), body_.size()};
         }
 
-        void set_param(std::string_view key, std::string_view value) {
-            params_.emplace(key, value);
+        void set_param(std::string&& key, std::string&& value) {
+            params_.emplace(std::move(key), std::move(value));
         }
 
         std::optional<std::string_view> param(const std::string& key) const {
@@ -62,6 +64,28 @@ namespace mio {
             return std::nullopt;
         }
 
+        void set_form(std::string&& key, std::string&& value) {
+            if (const auto it = form_.find(key); it != std::end(form_)) {
+                it->second.emplace_back(std::move(value));
+            } else {
+                form_.emplace(std::move(key), std::vector<std::string>{std::move(value)});
+            }
+        }
+
+        std::optional<std::string_view> form(const std::string& key) const {
+            if (const auto p = form_values(key); p && !p->empty()) {
+                return p->front();
+            }
+            return std::nullopt;
+        }
+
+        const std::vector<std::string>* form_values(const std::string& key) const {
+            if (const auto it = form_.find(key); it != std::end(form_)) {
+                return &it->second;
+            }
+            return nullptr;
+        }
+
     private:
         std::string method_;
         std::string request_uri_;
@@ -69,6 +93,7 @@ namespace mio {
         http_headers headers_;
         std::vector<std::byte> body_;
         std::unordered_map<std::string, std::string> params_;
+        std::unordered_map<std::string, std::vector<std::string>> form_;
     };
 } // namespace mio
 

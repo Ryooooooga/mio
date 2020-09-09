@@ -105,8 +105,8 @@ namespace mio {
     std::optional<http_response> router::handle_request(http_request& req) const {
         std::vector<std::pair<std::string_view, std::string>> params{};
         if (const auto handler = tree_.find(req.request_uri(), req.method(), params)) {
-            for (const auto& [key, value] : params) {
-                req.set_param(key, value);
+            for (auto&& [key, value] : params) {
+                req.set_param(std::string{key}, std::move(value));
             }
 
             return (*handler)(req);

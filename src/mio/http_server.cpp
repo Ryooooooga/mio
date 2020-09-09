@@ -8,9 +8,11 @@
 #include <unistd.h>
 
 #include "mio/application.hpp"
+#include "mio/bodies/x_www_form_url_encoded.hpp"
 #include "mio/http1/request.hpp"
 #include "mio/http1/response.hpp"
 #include "mio/sockets/socket.hpp"
+#include "mio/util/trim.hpp"
 
 namespace mio {
     namespace {
@@ -112,6 +114,14 @@ namespace mio {
                 keep_alive = req.headers().get("connection") == "keep-alive";
                 req.headers().remove("connection");
                 req.headers().remove("keep-alive");
+
+                if (const auto content_type = req.headers().get("content-type")) {
+                    const auto type = util::trim(content_type->substr(0, content_type->find(';')));
+
+                    if (type == "application/x-www-form-urlencoded") {
+                        bodies::parse_x_www_form_url_encoded(req);
+                    }
+                }
 
                 res = app->on_request(req);
             } catch (const std::exception& e) {

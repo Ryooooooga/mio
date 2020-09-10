@@ -59,19 +59,19 @@ namespace mio::middlewares {
         base.remove_suffix(1);
         // TODO: base = "/assets"
 
-        std::string_view uri = req.request_uri();
-        if (!uri.starts_with(base)) {
+        std::string_view path = req.path();
+        if (!path.starts_with(base)) {
             return;
         }
 
-        uri.remove_prefix(base.size());
-        if (!uri.empty() && !uri.starts_with('/')) {
+        path.remove_prefix(base.size());
+        if (!path.empty() && !path.starts_with('/')) {
             return;
         }
 
-        // uri == "" or uri == "/XXX"
+        // path == "" or path == "/XXX"
         auto file_path = path_;
-        file_path.concat(uri); // not path::append()
+        file_path.concat(path); // not path::append()
         file_path = file_path.lexically_normal();
 
         if (!file_path.native().starts_with(path_.native())) {

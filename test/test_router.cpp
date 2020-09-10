@@ -151,6 +151,7 @@ namespace {
         });
 
         test_request(router, "GET", "/", "GET /");
+        test_request(router, "GET", "/?name=xxx", "GET /");
         test_request(router, "POST", "/", "POST /");
         test_request(router, "GET", "/10", "GET /:id/");
         test_request(router, "GET", "/10/foo", "GET /:id/foo");

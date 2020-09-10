@@ -17,12 +17,10 @@ namespace mio::bodies {
             const auto sep = expr.find('=');
 
             const auto key = expr.substr(0, sep);
-            std::string value{sep != std::string_view::npos ? expr.substr(sep + 1) : std::string_view{}};
+            const auto value = sep != std::string_view::npos ? expr.substr(sep + 1) : std::string_view{};
 
-            std::ranges::replace(value, '+', ' ');
-
-            auto decoded_key = decode_uri(key);
-            auto decoded_value = decode_uri(value);
+            auto decoded_key = decode_uri(key, true);
+            auto decoded_value = decode_uri(value, true);
 
             if (!decoded_key || !decoded_value) {
                 throw std::runtime_error{"bad request"};

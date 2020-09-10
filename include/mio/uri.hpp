@@ -12,7 +12,7 @@ namespace mio {
         }
     } // namespace detail
 
-    inline std::optional<std::string> decode_uri(std::string_view s) {
+    inline std::optional<std::string> decode_uri(std::string_view s, bool replace_plus) {
         std::string text{};
         text.reserve(s.size());
 
@@ -28,11 +28,13 @@ namespace mio {
 
                 text += static_cast<char>(byte);
                 i += 3;
-                continue;
+            } else if (s[i] == '+' && replace_plus) {
+                text += ' ';
+                i++;
+            } else {
+                text += s[i];
+                i++;
             }
-
-            text += s[i];
-            i++;
         }
 
         return text;

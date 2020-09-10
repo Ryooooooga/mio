@@ -9,6 +9,7 @@ namespace mio {
         http_request(std::string_view method, std::string_view request_uri, std::string_view http_version, http_headers&& headers, std::vector<std::byte>&& body = {})
             : method_(method)
             , request_uri_(request_uri)
+            , query_index_(request_uri_.find('?'))
             , http_version_(http_version)
             , headers_(std::move(headers))
             , body_(std::move(body))
@@ -29,8 +30,12 @@ namespace mio {
             return method_;
         }
 
-        [[nodiscard]] const std::string& request_uri() const noexcept {
+        [[nodiscard]] std::string_view request_uri() const noexcept {
             return request_uri_;
+        }
+
+        [[nodiscard]] std::string_view path() const noexcept {
+            return request_uri().substr(0, query_index_);
         }
 
         [[nodiscard]] const std::string& http_version() const noexcept {
@@ -89,6 +94,7 @@ namespace mio {
     private:
         std::string method_;
         std::string request_uri_;
+        std::size_t query_index_;
         std::string http_version_;
         http_headers headers_;
         std::vector<std::byte> body_;

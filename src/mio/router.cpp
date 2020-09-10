@@ -85,7 +85,7 @@ namespace mio {
         }
 
         for (const auto& child : wildcards_) {
-            auto param = decode_uri(segment);
+            auto param = decode_uri(segment, true);
             if (!param) {
                 throw std::runtime_error{"invalid request"};
             }
@@ -104,7 +104,7 @@ namespace mio {
 
     std::optional<http_response> router::handle_request(http_request& req) const {
         std::vector<std::pair<std::string_view, std::string>> params{};
-        if (const auto handler = tree_.find(req.request_uri(), req.method(), params)) {
+        if (const auto handler = tree_.find(req.path(), req.method(), params)) {
             for (auto&& [key, value] : params) {
                 req.set_param(std::string{key}, std::move(value));
             }
